@@ -12,7 +12,7 @@ typedef struct {
 #define atomic_set(v, i) (((v)->counter) = (i))
 
 /**
- * A raw 32-bit cmpxchg stolen from linux. Takes a lock prefix for
+ * A raw 32-bit cmpxchg adapted from linux. Takes a lock prefix for
  * optionally memfencing before.
  */
 #define __raw_cmpxchg(ptr, old_value, new_value, lock)                  \
