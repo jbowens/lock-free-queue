@@ -7,13 +7,13 @@
  *
  * @author jbowens
  */
-typedef struct {
+typedef struct lockfree_qnode_t {
     void *n_value;
     struct lockfree_qnode_t *n_next;
 } lockfree_qnode_t;
 
 typedef struct {
-    lockfree_qnode_t *head;
+    lockfree_qnode_t *q_head;
     lockfree_qnode_t _sentinel_head;
     lockfree_qnode_t _sentinel_tail;
 } lockfree_queue_t;
@@ -26,7 +26,17 @@ typedef struct {
  * some function that will handle allocating new nodes. In this case, it's
  * just a fp to wrapper around malloc.
  */
-
 extern lockfree_qnode_t *(*qnode_allocator)(void);
 extern void(*qnode_deallocator)(lockfree_qnode_t *);
+
+/**
+ * Initializes a new lockfree queue.
+ */
+void lockfree_queue_init(lockfree_queue_t *queue)
+{
+    /* Setup the sentinel nodes. */
+    queue->q_head = &queue->_sentinel_head;
+    queue->_sentinel_head.n_next = &queue->_sentinel_tail;
+    queue->_sentinel_tail.n_next = 0;
+}
 
