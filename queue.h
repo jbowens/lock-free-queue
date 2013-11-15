@@ -33,3 +33,11 @@ extern void(*qnode_deallocator)(lockfree_qnode_t *);
  * Initializes a new lockfree queue.
  */
 void lockfree_queue_init(lockfree_queue_t *queue);
+
+/**
+ * Enqueues an item onto the queue.
+ *
+ * @param q the queue on which to enqueue
+ * @param v the value to enqueue
+ */
+void lockfree_queue_enqueue(lockfree_queue_t *q, void *v);
