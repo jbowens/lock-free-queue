@@ -24,7 +24,7 @@ typedef struct {
  * nodes. However, when writing the queue, I'm going to test in userland
  * where I'll use malloc. To make the transition easier, this is a fp to
  * some function that will handle allocating new nodes. In this case, it's
- * just a fp to wrapper around malloc.
+ * just a fp to a wrapper around malloc.
  */
 extern lockfree_qnode_t *(*qnode_allocator)(void);
 extern void(*qnode_deallocator)(lockfree_qnode_t *);
