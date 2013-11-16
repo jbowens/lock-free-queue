@@ -178,7 +178,7 @@ queue_test_t dequeue_crazy = {
 /********************************************************************************************/
 
 /* A shared table to record which values are successfully dequeued. */
-short intermixed_table[CRAZY_DEQUEUE_MAX_NUMBER];
+int intermixed_table[CRAZY_DEQUEUE_MAX_NUMBER];
 
 void *intermixed_main(void *arg)
 {
@@ -194,9 +194,7 @@ void *intermixed_main(void *arg)
         while ((val = (int) lockfree_queue_dequeue(&input->test->queue)) != 0) {
             if (val > INTERMIXED_MAX_NUMBER || val < 0)
                 return 0;
-            intermixed_table[val - 1]++;
-            /* TODO: This is a bad test until the line above can be replaced with an
-             * atomic increment. */
+            __sync_fetch_and_add(&intermixed_table[val - 1], 1);
         }
     }
     
@@ -246,7 +244,7 @@ int main() {
     queue_test_t *test_to_run[] = {
         &enqueue_crazy,
         &dequeue_crazy,
-        //&intermixed_test,
+        &intermixed_test,
         0
     };
 
