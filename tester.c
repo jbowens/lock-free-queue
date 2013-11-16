@@ -130,11 +130,17 @@ queue_test_t enqueue_crazy = {
 
 int main() {
 
+    /*
+     * A null-terminated list of tests to run.
+     */
     queue_test_t *test_to_run[] = {
         &enqueue_crazy,
         0
     };
 
+    /*
+     * Run all the tests in sequence.
+     */
     int success = 1;
     queue_test_t **test = &test_to_run[0];
     for (queue_test_t **test = &test_to_run[0]; *test != 0; test++) {
