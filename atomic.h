@@ -6,6 +6,5 @@
  */
 static int compare_and_set(void *loc, void *old_value, void *new_value)
 {
-    void * ret = __sync_val_compare_and_swap((void **) loc, old_value, new_value);
-    return ret == old_value ? 1 : 0;
+    return __sync_bool_compare_and_swap((void **) loc, old_value, new_value);
 }
