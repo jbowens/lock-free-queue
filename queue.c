@@ -1,11 +1,11 @@
 #include "queue.h"
 
-void lockfree_queue_init(lockfree_queue_t *queue)
+void lockfree_queue_init(lockfree_queue_t *q)
 {
     /* Setup the sentinel nodes. */
-    queue->q_head = &queue->_starting_sentinel_head;
-    queue->q_tail = &queue->_starting_sentinel_head;
-    queue->_starting_sentinel_head.n_next = 0;
+    q->q_head = &q->_starting_sentinel_head;
+    q->q_tail = &q->_starting_sentinel_head;
+    q->_starting_sentinel_head.n_next = 0;
 }
 
 void lockfree_queue_enqueue(lockfree_queue_t *q, void *v)
