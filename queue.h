@@ -9,13 +9,13 @@
  */
 typedef struct lockfree_qnode_t {
     void *n_value;
-    struct lockfree_qnode_t *n_next;
+    volatile struct lockfree_qnode_t *n_next;
 } lockfree_qnode_t;
 
 typedef struct {
     lockfree_qnode_t *q_head;
+    lockfree_qnode_t *q_tail;
     lockfree_qnode_t _sentinel_head;
-    lockfree_qnode_t _sentinel_tail;
 } lockfree_queue_t;
 
 /**

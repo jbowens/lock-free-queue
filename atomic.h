@@ -1,28 +1,15 @@
 #pragma once
 
-#include <stdint.h>
-
-typedef struct {
-        int counter;
-} atomic_t;
-
-/* Static initializer */
-#define ATOMIC_INIT(i)  { (i) }
-
-#define atomic_read(v)  (*(volatile int *)&(v)->counter)
-
-#define atomic_set(v, i) (((v)->counter) = (i))
-
 /**
  * A raw 32-bit cmpxchg adapted from linux. Takes a lock prefix for
  * optionally memfencing before.
  */
 #define __raw_cmpxchg(ptr, old_value, new_value, lock)                  \
 ({                                                                      \
-        __typeof__(*(ptr)) __ret;                                       \
-        __typeof__(*(ptr)) __old = (old_value);                         \
-        __typeof__(*(ptr)) __new = (new_value);                         \
-        volatile uint32_t *__ptr = (volatile uint32_t *)(ptr);          \
+        void *__ret;                                                    \
+        void *__old = (old_value);                                      \
+        void *__new = (new_value);                                      \
+        volatile void **__ptr = (volatile void **)(ptr);          \
         __asm__ volatile(lock "cmpxchgl %2,%1"                          \
                 : "=a" (__ret), "+m" (*__ptr)                           \
                 : "r" (__new), "0" (__old)                              \
@@ -33,15 +20,15 @@ typedef struct {
 /**
  * Compare and exchange on atomic_t's
  */
-#define atomic_cmpxchg(v, old_val, new_val)                                 \
-        __raw_cmpxchg(&v->counter, old_val, new_val, "")
+#define atomic_cmpxchg(ptr, old_val, new_val)                                 \
+        __raw_cmpxchg(ptr, old_val, new_val, "")
 
 /**
- * Compare and set on an atomic_t. Returns 1 if successful instead of
- * the old value.
+ * Compare and set. Intended only for 32 bit machines. Returns 1 if successful
+ * 0 otherwise.
  */
-static int atomic_cas(atomic_t *v, int old_value, int new_value)
+static int compare_and_set(void *loc, void *old_value, void *new_value)
 {
-        int ret = atomic_cmpxchg(v, old_value, new_value);
+        void *ret = atomic_cmpxchg(loc, old_value, new_value);
         return ret == old_value ? 1 : 0;
 }
