@@ -184,7 +184,7 @@ void *intermixed_main(void *arg)
 {
     thread_test_data_t *input = (thread_test_data_t *) arg;
 
-    if (input->thread_id % 2 == 0) {
+    if (input->thread_id % 3 == 0) {
         /* I'm an enqueuer. */
         for (int i = 1; i <= INTERMIXED_MAX_NUMBER; i++)
             lockfree_queue_enqueue(&input->test->queue, (void *)i);
@@ -195,6 +195,8 @@ void *intermixed_main(void *arg)
             if (val > INTERMIXED_MAX_NUMBER || val < 0)
                 return 0;
             intermixed_table[val - 1]++;
+            /* TODO: This is a bad test until the line above can be replaced with an
+             * atomic increment. */
         }
     }
     
@@ -214,20 +216,15 @@ int intermixed_cleanup(queue_test_t *test)
         if (val > INTERMIXED_MAX_NUMBER || val < 0)
             return 0;
         intermixed_table[val - 1]++;
-        /* TODO: This is a bad test until the line above can be replaced with an
-         * atomic increment. */
         count++;
     }
 
     /* Make sure all the numbers were dequeued. */
     int success = 1;
     /* Verify that we got the right number of counts. */
-    int num_enqueuers = test->num_threads / 2;
+    int num_enqueuers = test->num_threads / 3 + 1;
     for (int i = 0; i < INTERMIXED_MAX_NUMBER; i++) {
         success = success && (intermixed_table[i] == num_enqueuers);
-        if (intermixed_table[i] != num_enqueuers) {
-            printf("intermixed_table[%d] = %d != %d\n", i, intermixed_table[i], num_enqueuers);
-        }
     }
     return success;
 }
