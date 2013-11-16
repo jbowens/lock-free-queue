@@ -7,4 +7,4 @@ queue-64:
 	gcc -std=c99 -m64 -lpthread lockfree_queue.c tester.c atomic-x86_64.S -o run_tests-64.out
 
 clean:
-	rm run_tests.out
+	rm run_tests-32.out run_rests-64.out

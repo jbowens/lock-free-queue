@@ -20,8 +20,9 @@
 stamped_ref_cas:
   pushl %ebp
   movl  %esp, %ebp
-  subl  $0x4, %esp
-  movl  %ebx, (%esp)
+  subl  $0x8, %esp
+  movl  %ebx, 0x4(%esp)
+  movl  %esi, (%esp)
 
   # load old ref/stamp into %edx:%eax
   movl  0xc(%ebp), %edx
@@ -31,7 +32,8 @@ stamped_ref_cas:
   movl  0x14(%ebp), %ecx
   movl  0x18(%ebp), %ebx
 
-  lock cmpxchg8b 0x8(%ebp)
+  movl  0x8(%ebp), %esi
+  lock cmpxchg8b (%esi)
 
   # test ZF for whether we succeeded
   jz cas_succeeded
@@ -40,7 +42,8 @@ stamped_ref_cas:
 cas_succeeded:
   movl  $0x1, %eax
 cas_failed:
-  movl  (%esp), %ebx
+  movl  0x4(%esp), %ebx
+  movl  (%esp), %esi
   movl  %ebp, %esp
   popl  %ebp
   ret
