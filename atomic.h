@@ -1,5 +1,12 @@
 #pragma once
 
+#include <stdint.h>
+
+typedef struct stamped_ref {
+    void *ptr;
+    uint32_t stamp;
+} stamped_ref;
+
 /**
  * Compare and set macro.
  */
