@@ -44,7 +44,7 @@ typedef struct queue_test {
  */
 int run_test(queue_test_t *test)
 {
-    printf("Running test %s... ", test->name);
+    printf("Running test '%s'... ", test->name);
 
     lockfree_queue_init(&test->queue);
 
