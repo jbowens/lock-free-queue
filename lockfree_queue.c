@@ -1,5 +1,17 @@
 #include "lockfree_queue.h"
 
+/**
+ * Allocates a new qnode. This function should be used whenever allocating a
+ * new qnode. qnode_allocator() should NOT be called directly as it creates
+ * a new qnode on every call. This function instead will recycle qnodes if
+ * possible.
+ */
+static lockfree_qnode_t *alloc_qnode()
+{
+    return qnode_allocator();
+}
+
+
 void lockfree_queue_init(lockfree_queue_t *q)
 {
     /* Setup the sentinel nodes. */
@@ -10,7 +22,7 @@ void lockfree_queue_init(lockfree_queue_t *q)
 
 void lockfree_queue_enqueue(lockfree_queue_t *q, void *v)
 {
-    lockfree_qnode_t *new_node = qnode_allocator();
+    lockfree_qnode_t *new_node = alloc_qnode();
     new_node->n_value = v;
     new_node->n_next = 0;
 
