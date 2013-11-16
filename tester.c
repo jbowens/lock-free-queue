@@ -130,11 +130,12 @@ int main() {
         &enqueue_crazy,
         0
     };
-   
+
+    int success = 1;
     queue_test_t **test = &test_to_run[0];
     for (queue_test_t **test = &test_to_run[0]; *test != 0; test++) {
-        run_test(*test);
+        success = success && run_test(*test);
     }
 
-    return 0;
+    return success ? 0 : 1;
 }
