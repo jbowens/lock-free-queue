@@ -2,28 +2,44 @@
 
 #include "atomic.h"
 
+#define HAZARD_ENTRY_SIZE 4
+#define HAZARD_TABLE_SIZE 8
+
 /**
  * A lock-free queue. This uses the algorithm outlined in Herlihy and Shavit's The
  * Art of Multiprocessor Programming.
  *
- * @author jbowens
+ * @author jbowens, ejcaruso
  */
 
 /*
  * A node in the queue.
  */
-typedef struct lockfree_qnode_t {
+typedef struct lockfree_qnode {
     void *n_value;
-    volatile struct lockfree_qnode_t *n_next;
+    volatile struct lockfree_qnode *n_next;
 } lockfree_qnode_t;
+
+/*
+ * Table of hazard pointers.
+ */
+typedef struct hazard_entry {
+    lockfree_qnode_t *he_ptrs[HAZARD_ENTRY_SIZE];
+} hazard_entry_t;
+
+typedef struct hazard_table {
+    hazard_entry_t ht_entries[HAZARD_TABLE_SIZE];
+    struct hazard_table *ht_next_table;
+} hazard_table_t;
 
 /**
  * The queue data structure.
  */
-typedef struct {
+typedef struct lockfree_queue {
     lockfree_qnode_t *q_head;
     lockfree_qnode_t *q_tail;
-    lockfree_qnode_t _starting_sentinel_head;
+    hazard_table_t q_hazard_chain;
+    uint32_t q_next_tid;
 } lockfree_queue_t;
 
 /**
