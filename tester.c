@@ -8,6 +8,7 @@
 
 #define CRAZY_ENQUEUE_MAX_NUMBER 100000
 #define CRAZY_DEQUEUE_MAX_NUMBER 100000
+#define INTERMIXED_MAX_NUMBER 100000
 
 /* We're using malloc to allocate memory for queue nodes. */
 lockfree_qnode_t *(*qnode_allocator)(void) = &malloc_node_allocator;
@@ -131,7 +132,7 @@ queue_test_t enqueue_crazy = {
 /********************************************************************************************/
 
 /* A shared table to record which values are successfully dequeued. */
-int dequeue_table[CRAZY_DEQUEUE_MAX_NUMBER];
+short dequeue_table[CRAZY_DEQUEUE_MAX_NUMBER];
 
 void *dequeue_crazy_main(void *arg)
 {
@@ -172,6 +173,67 @@ queue_test_t dequeue_crazy = {
     .test_cleanup_fp = &dequeue_crazy_cleanup
 };
 
+/********************************************************************************************/
+/***************************** Intermixed enqueues and dequeues *****************************/
+/********************************************************************************************/
+
+/* A shared table to record which values are successfully dequeued. */
+short intermixed_table[CRAZY_DEQUEUE_MAX_NUMBER];
+
+void *intermixed_main(void *arg)
+{
+    thread_test_data_t *input = (thread_test_data_t *) arg;
+
+    if (input->thread_id % 2 == 0) {
+        /* I'm an enqueuer. */
+        for (int i = 1; i <= INTERMIXED_MAX_NUMBER; i++)
+            lockfree_queue_enqueue(&input->test->queue, (void *)i);
+    } else {
+        /* I'm a dequeuer. */
+        int val;
+        while ((val = (int) lockfree_queue_dequeue(&input->test->queue)) != 0) {
+            if (val > INTERMIXED_MAX_NUMBER || val < 0)
+                return 0;
+            intermixed_table[val - 1]++;
+        }
+    }
+    
+    return 0;
+}
+
+void intermixed_setup(queue_test_t *test) {
+    memset(&intermixed_table, 0, sizeof(intermixed_table));
+}
+
+int intermixed_cleanup(queue_test_t *test)
+{
+    /* Dequeue any stragglers. */
+    int val;
+    while ((val = (int) lockfree_queue_dequeue(&test->queue)) != 0) {
+        if (val > INTERMIXED_MAX_NUMBER || val < 0)
+            return 0;
+        intermixed_table[val - 1]++;
+    }
+
+    /* Make sure all the numbers were dequeued. */
+    int success = 1;
+    /* Verify that we got the right number of counts. */
+    int num_enqueuers = test->num_threads / 2;
+    for (int i = 0; i < INTERMIXED_MAX_NUMBER; i++) {
+        success = success && (intermixed_table[i] == num_enqueuers);
+    }
+    return success;
+}
+
+queue_test_t intermixed_test = {
+    .name = "Intermixed enqueues and dequeues",
+    .num_threads = 100,
+    .thread_main_fp = &intermixed_main,
+    .test_setup_fp = &intermixed_setup,
+    .test_cleanup_fp = &intermixed_cleanup
+};
+
+
 int main() {
 
     /*
@@ -180,6 +242,7 @@ int main() {
     queue_test_t *test_to_run[] = {
         &enqueue_crazy,
         &dequeue_crazy,
+        &intermixed_test,
         0
     };
 
