@@ -6,7 +6,7 @@
 #include "queue.h"
 #include "malloc_node_allocator.h"
 
-#define TEST_THREADS 32
+#define CRAZY_ENQUEUE_MAX_NUMBER 10000
 
 /* We're using malloc to allocate memory for queue nodes. */
 lockfree_qnode_t *(*qnode_allocator)(void) = &malloc_node_allocator;
@@ -84,8 +84,8 @@ void *enqueue_crazy_main(void *arg)
 {
     thread_test_data_t *input = (thread_test_data_t *) arg;
 
-    /* Add numbers 1 to 1000 to the queue. */
-    for (int i = 1; i <= 1000; i++)
+    /* Add numbers 1 to MAX to the queue. */
+    for (int i = 1; i <= CRAZY_ENQUEUE_MAX_NUMBER; i++)
         lockfree_queue_enqueue(&input->test->queue, (void *) i);
     
     return 0;
@@ -99,12 +99,12 @@ void enqueue_crazy_setup(queue_test_t *test)
 int enqueue_crazy_cleanup(queue_test_t *test)
 {
     /* Make sure all the numbers appear num_threads times. */
-    int counts[1000];
+    int counts[CRAZY_ENQUEUE_MAX_NUMBER];
     memset(&counts, 0, sizeof(counts));
     
     int ret = (int) lockfree_queue_dequeue(&test->queue);
     while (ret != 0) {
-        if (ret > 1000 || ret < 0) {
+        if (ret > CRAZY_ENQUEUE_MAX_NUMBER || ret < 0) {
             /* We got a bad value! */
             return 1;
         }
@@ -114,7 +114,7 @@ int enqueue_crazy_cleanup(queue_test_t *test)
 
     int success = 1;
     /* Verify that we got the right number of counts. */
-    for (int i = 0; i < 1000; i++) {
+    for (int i = 0; i < CRAZY_ENQUEUE_MAX_NUMBER; i++) {
         success = success && (counts[i] == test->num_threads);
     }
     return success;
