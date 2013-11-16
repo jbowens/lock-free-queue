@@ -1,7 +1,7 @@
 #pragma once
 
 #include <stdlib.h>
-#include "queue.h"
+#include "lockfree_queue.h"
 
 /**
  * A node allocator that uses malloc.

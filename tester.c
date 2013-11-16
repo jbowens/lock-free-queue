@@ -3,7 +3,7 @@
 #include <string.h>
 #include <pthread.h>
 
-#include "queue.h"
+#include "lockfree_queue.h"
 #include "malloc_node_allocator.h"
 
 #define CRAZY_ENQUEUE_MAX_NUMBER 100000

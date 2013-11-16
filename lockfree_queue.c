@@ -1,4 +1,4 @@
-#include "queue.h"
+#include "lockfree_queue.h"
 
 void lockfree_queue_init(lockfree_queue_t *q)
 {
