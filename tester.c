@@ -6,7 +6,8 @@
 #include "queue.h"
 #include "malloc_node_allocator.h"
 
-#define CRAZY_ENQUEUE_MAX_NUMBER 10000
+#define CRAZY_ENQUEUE_MAX_NUMBER 100000
+#define CRAZY_DEQUEUE_MAX_NUMBER 100000
 
 /* We're using malloc to allocate memory for queue nodes. */
 lockfree_qnode_t *(*qnode_allocator)(void) = &malloc_node_allocator;
@@ -91,10 +92,7 @@ void *enqueue_crazy_main(void *arg)
     return 0;
 }
 
-void enqueue_crazy_setup(queue_test_t *test)
-{
-    /* Nothing to do. */
-}
+void enqueue_crazy_setup(queue_test_t *test) { }
 
 int enqueue_crazy_cleanup(queue_test_t *test)
 {
@@ -122,10 +120,56 @@ int enqueue_crazy_cleanup(queue_test_t *test)
 
 queue_test_t enqueue_crazy = {
     .name = "Everybody enqueues",
-    .num_threads = 10,
+    .num_threads = 100,
     .thread_main_fp = &enqueue_crazy_main,
     .test_setup_fp = &enqueue_crazy_setup,
     .test_cleanup_fp = &enqueue_crazy_cleanup
+};
+
+/********************************************************************************************/
+/************************ Everybody dequeue like there's no tomorrow ************************/
+/********************************************************************************************/
+
+/* A shared table to record which values are successfully dequeued. */
+int dequeue_table[CRAZY_DEQUEUE_MAX_NUMBER];
+
+void *dequeue_crazy_main(void *arg)
+{
+    thread_test_data_t *input = (thread_test_data_t *) arg;
+
+    int val;
+    while ((val = (int) lockfree_queue_dequeue(&input->test->queue)) != 0) {
+        if (val > CRAZY_DEQUEUE_MAX_NUMBER || val < 0)
+            return 0;
+        dequeue_table[val - 1]++;
+    }
+    
+    return 0;
+}
+
+void dequeue_crazy_setup(queue_test_t *test) {
+    for (int i = 1; i <= CRAZY_DEQUEUE_MAX_NUMBER; i++)
+        lockfree_queue_enqueue(&test->queue, (void *) i);
+    memset(&dequeue_table, 0, sizeof(dequeue_table));
+}
+
+int dequeue_crazy_cleanup(queue_test_t *test)
+{
+    /* Make sure all the numbers were dequeued times. */
+    int success = 1;
+    /* Verify that we got the right number of counts. */
+    for (int i = 0; i < CRAZY_DEQUEUE_MAX_NUMBER; i++) {
+        success = success && dequeue_table[i];
+    }
+    return success;
+}
+
+queue_test_t dequeue_crazy = {
+    .name = "Everybody dequeues",
+    .num_threads = 100,
+    .thread_main_fp = &dequeue_crazy_main,
+    .test_setup_fp = &dequeue_crazy_setup,
+    .test_cleanup_fp = &dequeue_crazy_cleanup
 };
 
 int main() {
@@ -135,6 +179,7 @@ int main() {
      */
     queue_test_t *test_to_run[] = {
         &enqueue_crazy,
+        &dequeue_crazy,
         0
     };
 
