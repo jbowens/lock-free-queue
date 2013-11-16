@@ -11,7 +11,6 @@ static lockfree_qnode_t *alloc_qnode()
     return qnode_allocator();
 }
 
-
 void lockfree_queue_init(lockfree_queue_t *q)
 {
     /* Setup the sentinel nodes. */
