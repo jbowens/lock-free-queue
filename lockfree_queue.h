@@ -3,15 +3,23 @@
 #include "atomic.h"
 
 /**
- * A lock-free queue implementation.
+ * A lock-free queue. This uses the algorithm outlined in Herlihy and Shavit's The
+ * Art of Multiprocessor Programming.
  *
  * @author jbowens
+ */
+
+/*
+ * A node in the queue.
  */
 typedef struct lockfree_qnode_t {
     void *n_value;
     volatile struct lockfree_qnode_t *n_next;
 } lockfree_qnode_t;
 
+/**
+ * The queue data structure.
+ */
 typedef struct {
     lockfree_qnode_t *q_head;
     lockfree_qnode_t *q_tail;
