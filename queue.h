@@ -15,7 +15,7 @@ typedef struct lockfree_qnode_t {
 typedef struct {
     lockfree_qnode_t *q_head;
     lockfree_qnode_t *q_tail;
-    lockfree_qnode_t _sentinel_head;
+    lockfree_qnode_t _starting_sentinel_head;
 } lockfree_queue_t;
 
 /**
@@ -41,3 +41,11 @@ void lockfree_queue_init(lockfree_queue_t *queue);
  * @param v the value to enqueue
  */
 void lockfree_queue_enqueue(lockfree_queue_t *q, void *v);
+
+/**
+ * Dequeues an item from the queue. If there are no items on
+ * the queue, it returns 0.
+ *
+ * @param q the queue from which to dequeue
+ */
+void *lockfree_queue_dequeue(lockfree_queue_t *q);
