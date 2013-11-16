@@ -24,11 +24,13 @@ stamped_ref_cas:
 
   # load old ref/stamp into %rdx:%rax
   movq  %rdx, %rax
+  shlq  $32, %rax
   movq  %rsi, %rdx
 
   # load new ref/stamp into %rcx:%rbx
   # (new ref is already in %rcx)
   movq  %r8, %rbx
+  shlq  $32, %rbx
 
   lock cmpxchg16b (%rdi)
 
@@ -50,6 +52,7 @@ stamped_ref_get:
   lddqu   (%rdi), %xmm0
   movq    %xmm0,  %rax
   movhps  %xmm0,  (%rsi)
+  shrq    $32, (%rsi)
   ret
 
 .size stamped_ref_get, .-stamped_ref_get
