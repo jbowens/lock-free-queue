@@ -69,6 +69,10 @@ int run_test(queue_test_t *test)
     /* Clean up the test. */
     int success = test->test_cleanup_fp(test);
     printf("%s\n", success ? "SUCCESS" : "FAILURE");
+
+    /* Free dynamically allocated memory. */
+    free(threads);
+    free(thread_inputs);
     return success;
 }
 
