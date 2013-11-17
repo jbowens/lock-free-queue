@@ -41,6 +41,7 @@ void hazard_ptr_init(hazard_table_t *table)
 
 void hazard_ptr_wait(hazard_table_t *table, void *ptr)
 {
+    /* TODO: Can we do something more reasonable, like sleep? */
     /* Spin while the pointer exists in the hazard table. */
     while (search_hazard_table(table, ptr));
 }
