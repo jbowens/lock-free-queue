@@ -1,24 +1,5 @@
 #include "lockfree_queue.h"
 
-static int search_hazard_for_qnode(lockfree_queue_t *q, lockfree_qnode_t *node)
-{
-    hazard_table_t *hazard;
-    uint32_t last = q->q_next_tid % HAZARD_TABLE_SIZE;
-
-    int i, j;
-    for (hazard = &q->q_hazard_chain; hazard != 0; hazard = hazard->ht_next_table) {
-        uint32_t num_to_search = hazard->ht_next_table ? HAZARD_TABLE_SIZE : last;
-        for (i = 0; i < num_to_search; ++i) {
-            for (j = 0; j < HAZARD_ENTRY_SIZE; ++j) {
-                if (hazard->ht_entries[i].he_ptrs[j] == node) {
-                    return 1;
-                }
-            }
-        }
-    }
-    return 0;
-}
-
 /**
  * Allocates a new qnode. This function should be used whenever allocating a
  * new qnode. qnode_allocator() should NOT be called directly as it creates

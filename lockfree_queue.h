@@ -1,9 +1,6 @@
 #pragma once
 
-#include "atomic.h"
-
-#define HAZARD_ENTRY_SIZE 4
-#define HAZARD_TABLE_SIZE 8
+#include "hazard_ptr.h"
 
 /**
  * A lock-free queue. This uses the algorithm outlined in Herlihy and Shavit's The
@@ -19,18 +16,6 @@ typedef struct lockfree_qnode {
     void *n_value;
     volatile struct lockfree_qnode *n_next;
 } lockfree_qnode_t;
-
-/*
- * Table of hazard pointers.
- */
-typedef struct hazard_entry {
-    lockfree_qnode_t *he_ptrs[HAZARD_ENTRY_SIZE];
-} hazard_entry_t;
-
-typedef struct hazard_table {
-    hazard_entry_t ht_entries[HAZARD_TABLE_SIZE];
-    struct hazard_table *ht_next_table;
-} hazard_table_t;
 
 /**
  * The queue data structure.
