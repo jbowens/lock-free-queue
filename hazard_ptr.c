@@ -62,7 +62,7 @@ hazard_entry_t *hazard_ptr_getentry(hazard_table_t *table, uint32_t tid)
     hazard_table_t *new_table = 0;
 
     while (off >= HAZARD_TABLE_SIZE) {
-        if (new_table != 0) {
+        if (new_table == 0) {
             new_table = hazard_table_alloc();
         }
 
