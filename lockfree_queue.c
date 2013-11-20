@@ -1,4 +1,5 @@
 #include "lockfree_queue.h"
+#include "lockfree_reapd.h"
 
 /**
  * Allocates a new qnode. This function should be used whenever allocating a
