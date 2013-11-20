@@ -1,5 +1,6 @@
 #pragma once
 
+#include <pthread.h>
 #include "hazard_ptr.h"
 
 /**
@@ -26,3 +27,19 @@ typedef struct lockfree_reapd_attr {
     /* A pointer to the free list used by the lock-free data structure. */
     lockfree_freenode_t **lfra_free_list;
 } lockfree_reapd_attr_t;
+
+/**
+ * Just for while we're testing in userland.
+ */
+typedef pthread_t lf_reaper_t;
+
+/**
+ * Spawns a new reaper.
+ */
+lf_reaper_t *lockfree_reapd_spawn(lockfree_reapd_attr_t *attr);
+
+/**
+ * The body of the reaper.
+ */
+void *lockfree_reapd_main(void *arg);
+
