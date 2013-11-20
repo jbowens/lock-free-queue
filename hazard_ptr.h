@@ -29,15 +29,6 @@ typedef struct hazard_table {
 void hazard_ptr_init(hazard_table_t *table);
 
 /**
- * Spins until the given pointer is no longer covered in the
- * given hazard table.
- *
- * @param table the table on which to scan
- * @param ptr the pointer to wait to be no longer covered
- */
-void hazard_ptr_wait(hazard_table_t *table, void *ptr);
-
-/**
  * Retrieves a pointer to a harzard entry in the given harzard table, corresponding
  * to the given thread id. If there is no entry yet for the given thread id, the
  * table will be expanded in order to include entries for the given tid.

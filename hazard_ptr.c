@@ -39,13 +39,6 @@ void hazard_ptr_init(hazard_table_t *table)
     memset(table, 0, sizeof(hazard_table_t));
 }
 
-void hazard_ptr_wait(hazard_table_t *table, void *ptr)
-{
-    /* TODO: Can we do something more reasonable, like sleep? */
-    /* Spin while the pointer exists in the hazard table. */
-    while (search_hazard_table(table, ptr));
-}
-
 hazard_entry_t *hazard_ptr_getentry(hazard_table_t *table, uint32_t tid)
 {
     hazard_table_t *hazard = table;
