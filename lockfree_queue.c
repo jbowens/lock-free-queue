@@ -16,37 +16,40 @@ void lockfree_queue_init(lockfree_queue_t *q)
 {
     /* Setup the sentinel nodes. */
     lockfree_qnode_t *sentinel = alloc_qnode();
-    sentinel->n_next = 0;
-    q->q_head = sentinel;
-    q->q_tail = sentinel;
-
-    q->q_hazard_chain.ht_next_table = 0;
+    stamped_ref_init(&sentinel->n_next, 0);
+    stamped_ref_init(&q->q_head, sentinel);
+    stamped_ref_init(&q->q_tail, sentinel);
 }
 
 void lockfree_queue_enqueue(lockfree_queue_t *q, void *v)
 {
     lockfree_qnode_t *new_node = alloc_qnode();
     new_node->n_value = v;
-    new_node->n_next = 0;
+    stamped_ref_init(&new_node->n_next, 0);
 
     /* Keep attempting to enqueue. */
     while (1) {
-        lockfree_qnode_t *last = q->q_tail;
-        lockfree_qnode_t *next = (lockfree_qnode_t *) last->n_next;
+        uint32_t last_stamp, next_stamp;
+        lockfree_qnode_t *last = (lockfree_qnode_t *) stamped_ref_get(&q->q_tail, &last_stamp);
+        lockfree_qnode_t *next = (lockfree_qnode_t *) stamped_ref_get(&last->n_next, &next_stamp);
 
-        if (last == q->q_tail) {
+        uint32_t new_stamp;
+        if (last == q->q_tail.ptr) {
             if (next == 0) {
+                new_stamp = next_stamp + 1;
                 /* Try and atomically thread our node onto the queue. */
-                if (compare_and_set(&last->n_next, next, new_node)) {
+                if (stamped_ref_cas(&last->n_next, next, next_stamp, new_node, new_stamp)) {
+                    new_stamp = last_stamp + 1;
                     /* Yay, we successfully threaded ourselves onto the queue. Now,
                      * we must update the tail. */
-                    compare_and_set(&q->q_tail, last, new_node);
+                    stamped_ref_cas(&q->q_tail, last, last_stamp, new_node, new_stamp);
                     return;
                 }
             } else {
+                new_stamp = last_stamp + 1;
                 /* Someone beat us to the punch. Help them out by
                  * updating the tail. */
-                compare_and_set(&q->q_tail, last, next);
+                stamped_ref_cas(&q->q_tail, last, last_stamp, next, new_stamp);
             }
         }
     }
@@ -56,24 +59,29 @@ void *lockfree_queue_dequeue(lockfree_queue_t *q)
 {
     /* Keep attempting to dequeue. */
     while (1) {
-        lockfree_qnode_t *first = q->q_head;
-        lockfree_qnode_t *last = q->q_tail;
-        lockfree_qnode_t *next = (lockfree_qnode_t *) first->n_next;
-        if (first == q->q_head) {
+        uint32_t first_stamp, last_stamp, next_stamp;
+        lockfree_qnode_t *first = (lockfree_qnode_t *) stamped_ref_get(&q->q_head, &first_stamp);
+        lockfree_qnode_t *last = (lockfree_qnode_t *) stamped_ref_get(&q->q_tail, &last_stamp);
+        lockfree_qnode_t *next = (lockfree_qnode_t *) stamped_ref_get(&first->n_next, &next_stamp);
+
+        uint32_t new_stamp;
+        if (first == q->q_head.ptr) {
             if (first == last) {
                 if (next == 0) {
                     /* The queue is empty. Return 0. */
                     return 0;
                 }
                 else {
+                    new_stamp = last_stamp + 1;
                     /* The tail hasn't been updated yet by a slow 
                      * enqueuer. Let's help them out and fix it. */
-                    compare_and_set(&q->q_tail, last, next);
+                    stamped_ref_cas(&q->q_tail, last, last_stamp, next, new_stamp);
                 }
             } else {
                 void *value = next->n_value;
+                new_stamp = first_stamp + 1;
                 /* Try and remove it from the queue. */
-                if (compare_and_set(&q->q_head, first, next)) {
+                if (stamped_ref_cas(&q->q_head, first, first_stamp, next, new_stamp)) {
                     return value;
                 }
             }

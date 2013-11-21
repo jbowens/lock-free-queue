@@ -25,12 +25,12 @@ stamped_ref_cas:
   movl  %esi, (%esp)
 
   # load old ref/stamp into %edx:%eax
-  movl  0xc(%ebp), %edx
-  movl  0x10(%ebp), %eax
+  movl  0xc(%ebp), %eax
+  movl  0x10(%ebp), %edx
 
   # load new ref/stamp into %ecx:%ebx
-  movl  0x14(%ebp), %ecx
-  movl  0x18(%ebp), %ebx
+  movl  0x14(%ebp), %ebx
+  movl  0x18(%ebp), %ecx
 
   movl  0x8(%ebp), %esi
   lock cmpxchg8b (%esi)
@@ -55,9 +55,11 @@ stamped_ref_get:
   movl  %esp, %ebp
   subl  $0x8, %esp
 
-  movq  0x8(%ebp), %mm0
+  mov   0x8(%ebp), %eax
+  movq  (%eax), %mm0
   movq  %mm0, (%esp)
   emms
+
   movl  (%esp), %eax
   movl  0x4(%esp), %edx
   movl  0xc(%ebp), %ecx

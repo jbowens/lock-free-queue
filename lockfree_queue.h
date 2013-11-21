@@ -1,5 +1,6 @@
 #pragma once
 
+#include "atomic.h"
 #include "hazard_ptr.h"
 
 /**
@@ -14,16 +15,18 @@
  */
 typedef struct lockfree_qnode {
     void *n_value;
-    volatile struct lockfree_qnode *n_next;
+    volatile stamped_ref_t n_next;
 } lockfree_qnode_t;
+
+hazard_table_t q_hazard_chain;
 
 /**
  * The queue data structure.
  */
 typedef struct lockfree_queue {
-    lockfree_qnode_t *q_head;
-    lockfree_qnode_t *q_tail;
-    hazard_table_t q_hazard_chain;
+    /* refs to lockfree qnodes */
+    stamped_ref_t q_head;
+    stamped_ref_t q_tail;
     uint32_t q_next_tid;
 } lockfree_queue_t;
 

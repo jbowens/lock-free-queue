@@ -119,8 +119,16 @@ int enqueue_crazy_cleanup(queue_test_t *test)
     return success;
 }
 
-queue_test_t enqueue_crazy = {
-    .name = "Everybody enqueues",
+queue_test_t enqueue_crazy_10 = {
+    .name = "Everybody enqueues (10)",
+    .num_threads = 10,
+    .thread_main_fp = &enqueue_crazy_main,
+    .test_setup_fp = &enqueue_crazy_setup,
+    .test_cleanup_fp = &enqueue_crazy_cleanup
+};
+
+queue_test_t enqueue_crazy_100 = {
+    .name = "Everybody enqueues (100)",
     .num_threads = 100,
     .thread_main_fp = &enqueue_crazy_main,
     .test_setup_fp = &enqueue_crazy_setup,
@@ -165,8 +173,16 @@ int dequeue_crazy_cleanup(queue_test_t *test)
     return success;
 }
 
-queue_test_t dequeue_crazy = {
-    .name = "Everybody dequeues",
+queue_test_t dequeue_crazy_10 = {
+    .name = "Everybody dequeues (10)",
+    .num_threads = 10,
+    .thread_main_fp = &dequeue_crazy_main,
+    .test_setup_fp = &dequeue_crazy_setup,
+    .test_cleanup_fp = &dequeue_crazy_cleanup
+};
+
+queue_test_t dequeue_crazy_100 = {
+    .name = "Everybody dequeues (100)",
     .num_threads = 100,
     .thread_main_fp = &dequeue_crazy_main,
     .test_setup_fp = &dequeue_crazy_setup,
@@ -242,8 +258,10 @@ int main() {
      * A null-terminated list of tests to run.
      */
     queue_test_t *test_to_run[] = {
-        &enqueue_crazy,
-        &dequeue_crazy,
+        &enqueue_crazy_10,
+        &enqueue_crazy_100,
+        &dequeue_crazy_10,
+        &dequeue_crazy_100,
         &intermixed_test,
         0
     };

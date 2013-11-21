@@ -23,14 +23,14 @@ stamped_ref_cas:
   movq  %rsi, (%rsp)
 
   # load old ref/stamp into %rdx:%rax
-  movq  %rdx, %rax
-  shlq  $32, %rax
-  movq  %rsi, %rdx
+  # (old stamp is already in %rdx)
+  shlq  $32, %rdx
+  movq  %rsi, %rax
 
   # load new ref/stamp into %rcx:%rbx
-  # (new ref is already in %rcx)
-  movq  %r8, %rbx
-  shlq  $32, %rbx
+  movq  %rcx, %rbx
+  movq  %r8, %rcx
+  shlq  $32, %rcx
 
   lock cmpxchg16b (%rdi)
 
