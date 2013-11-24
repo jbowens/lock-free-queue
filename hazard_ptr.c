@@ -17,7 +17,7 @@ static void hazard_table_free(hazard_table_t *table)
     free(table);
 }
 
-static int search_hazard_table(hazard_table_t *table, void *ptr)
+int hazard_table_search(hazard_table_t *table, void *ptr)
 {
     hazard_table_t *hazard;
 

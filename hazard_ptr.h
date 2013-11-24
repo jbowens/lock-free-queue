@@ -29,6 +29,11 @@ typedef struct hazard_table {
 void hazard_ptr_init(hazard_table_t *table);
 
 /**
+ * Searches the hazard table for the given pointer.
+ */
+int hazard_table_search(hazard_table_t *table, void *ptr);
+
+/**
  * Retrieves a pointer to a harzard entry in the given harzard table, corresponding
  * to the given thread id. If there is no entry yet for the given thread id, the
  * table will be expanded in order to include entries for the given tid.

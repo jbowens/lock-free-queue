@@ -24,8 +24,9 @@ typedef struct lockfree_reapd_attr {
     hazard_table_t *lfra_hazard_table;
     /* The function to call to actually reclaim memory. */
     void (*lfra_free_func)(void *);
-    /* A pointer to the free list used by the lock-free data structure. */
-    lockfree_freenode_t **lfra_free_list;
+    /* A pointer to the sentinel head of the free list used
+     * by the lock-free data structure. */
+    lockfree_freenode_t *lfra_free_list;
 } lockfree_reapd_attr_t;
 
 /**
