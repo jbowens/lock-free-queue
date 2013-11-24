@@ -21,6 +21,54 @@ void lockfree_queue_init(lockfree_queue_t *q)
     stamped_ref_init(&q->q_tail, sentinel);
 }
 
+/**
+ * Covers in the hazard table and dereferences the given stamped reference.
+ */
+static lockfree_qnode_t *lockfree_queue_get_and_cover(lockfree_queue_t *q, stamped_ref_t *ref, uint32_t *final_stamp)
+{
+    hazard_entry_t *entry = pthread_getspecific(hazard_ptr_entry_key);
+    if (!entry) {
+        /* We haven't gotten our hazard table entry yet. Let's make it. */
+        uint32_t my_tid = __sync_fetch_and_add(&q->q_next_tid, 1);
+        entry = hazard_ptr_getentry(&q_hazard_chain, my_tid);
+        pthread_setspecific(hazard_ptr_entry_key, entry);
+    }
+
+    /* Keep trying until we're successful. */
+    uint32_t stamp;
+    uint32_t verify_stamp;
+    for (;;) {
+        /* Deference the stamped reference. */
+        lockfree_qnode_t *node = (lockfree_qnode_t *) stamped_ref_get(ref, &stamp);
+        /* Cover the node in the hazard table. */
+        hazard_ptr_add(entry, node);
+
+        /* Verify that the reference didn't change while we were covering it. */
+        lockfree_qnode_t *verify_node = (lockfree_qnode_t *) stamped_ref_get(ref, &verify_stamp);
+        
+        if (node == verify_node && stamp == verify_stamp) {
+            /* We succeeded! We can return this node and we're guaranteed that no one will free it
+             * out from underneath us. */
+            *final_stamp = stamp;
+            return node;
+        }
+       
+        /* We failed. Remove the ptr from our table and try again. */
+        hazard_ptr_remove(entry, node);
+    }
+}
+
+static void lockfree_queue_uncover(stamped_ref_t *ref)
+{
+    hazard_entry_t *entry = pthread_getspecific(hazard_ptr_entry_key);
+    /* TODO: Assert that entry != NULL */
+
+    /* Jankiest cast evarrrrrr */
+    lockfree_qnode_t *node = (lockfree_qnode_t *) ref;
+
+    hazard_ptr_remove(entry, node);
+}
+
 void lockfree_queue_enqueue(lockfree_queue_t *q, void *v)
 {
     lockfree_qnode_t *new_node = alloc_qnode();

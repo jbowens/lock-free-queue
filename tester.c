@@ -254,6 +254,9 @@ queue_test_t intermixed_test = {
 
 int main() {
 
+    /* Create a thread local key to be used by the hazard ptr. */
+    pthread_key_create(&hazard_ptr_entry_key, NULL);
+
     /*
      * A null-terminated list of tests to run.
      */

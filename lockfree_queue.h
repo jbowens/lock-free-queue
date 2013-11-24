@@ -1,5 +1,7 @@
 #pragma once
 
+#include <pthread.h>
+
 #include "atomic.h"
 #include "hazard_ptr.h"
 
@@ -9,6 +11,11 @@
  *
  * @author jbowens, ejcaruso
  */
+
+/**
+ * Thread local key for the hazard pointer entry.
+ */
+pthread_key_t hazard_ptr_entry_key;
 
 /*
  * A node in the queue.
