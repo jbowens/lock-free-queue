@@ -36,9 +36,9 @@ stamped_ref_cas:
   lock cmpxchg8b (%esi)
 
   # test ZF for whether we succeeded
-  jz 1f
+  jz    1f
   movl  $0x0, %eax
-  jmp 2f
+  jmp   2f
 1:
   movl  $0x1, %eax
 2:
@@ -55,7 +55,7 @@ stamped_ref_get:
   movl  %esp, %ebp
   subl  $0x8, %esp
 
-  mov   0x8(%ebp), %eax
+  movl  0x8(%ebp), %eax
   movq  (%eax), %mm0
   movq  %mm0, (%esp)
   emms
