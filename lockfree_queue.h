@@ -4,6 +4,7 @@
 
 #include "atomic.h"
 #include "hazard_ptr.h"
+#include "lockfree_reapd.h"
 
 /**
  * A lock-free queue. This uses the algorithm outlined in Herlihy and Shavit's The
@@ -17,6 +18,11 @@
  */
 pthread_key_t hazard_ptr_entry_key;
 
+/**
+ * The list of dead nodes to be reaped.
+ */
+lockfree_freenode_t free_qnodes_head;
+
 /*
  * A node in the queue.
  */
@@ -25,7 +31,15 @@ typedef struct lockfree_qnode {
     volatile stamped_ref_t n_next;
 } lockfree_qnode_t;
 
+/**
+ * The head of the lockfree queue hazard table chain.
+ */
 hazard_table_t q_hazard_chain;
+
+/**
+ * Attrs used for initializing the qnode reaper.
+ */
+lockfree_reapd_attr_t qnode_reapd_attr;
 
 /**
  * The queue data structure.
@@ -47,6 +61,11 @@ typedef struct lockfree_queue {
  */
 extern lockfree_qnode_t *(*qnode_allocator)(void);
 extern void(*qnode_deallocator)(lockfree_qnode_t *);
+
+/**
+ * Initializes lockfree queue shared systems.
+ */
+void lockfree_queues_initall();
 
 /**
  * Initializes a new lockfree queue.

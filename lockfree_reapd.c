@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <sched.h>
+#include "atomic.h"
 #include "lockfree_reapd.h"
 
 lf_reaper_t *lockfree_reapd_spawn(lockfree_reapd_attr_t *attr)
@@ -21,10 +22,13 @@ void *lockfree_reapd_main(void *arg)
         {
             /* Is the pointer to this item still in the hazard table? */
             if (!hazard_table_search(attr->lfra_hazard_table, curr)) {
-                /* This pointer is no longer referenced. Free it. */
-                attr->lfra_free_func(curr);
-                /* Unlink the node from the free list. */
-                prev->lffn_next = curr->lffn_next;
+                /* This pointer is no longer referenced. Try and unlink and free it. */
+
+                if (compare_and_set(&prev->lffn_next, curr, curr->lffn_next)) {
+                    attr->lfra_free_func(curr);
+                } else {
+                    prev = curr;
+                }
             } else {
                 /* We didn't unlink curr, so move prev forward to curr. */
                 prev = curr;

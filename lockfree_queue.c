@@ -1,6 +1,21 @@
 #include "lockfree_queue.h"
 #include "lockfree_reapd.h"
 
+
+void lockfree_queues_initall()
+{
+    /* Create a thread local key to be used by the hazard ptr. */
+    pthread_key_create(&hazard_ptr_entry_key, NULL);
+
+    free_qnodes_head.lffn_next = 0;
+    q_hazard_chain.ht_next_table = 0;
+
+    qnode_reapd_attr.lfra_hazard_table = &q_hazard_chain;
+    qnode_reapd_attr.lfra_free_func = (void(*)(void *)) qnode_deallocator;
+    qnode_reapd_attr.lfra_free_list = &free_qnodes_head;
+    lf_reaper_t *reaper = lockfree_reapd_spawn(&qnode_reapd_attr);
+}
+
 /**
  * Allocates a new qnode. This function should be used whenever allocating a
  * new qnode. qnode_allocator() should NOT be called directly as it creates
@@ -24,7 +39,8 @@ void lockfree_queue_init(lockfree_queue_t *q)
 /**
  * Covers in the hazard table and dereferences the given stamped reference.
  */
-static lockfree_qnode_t *lockfree_queue_get_and_cover(lockfree_queue_t *q, stamped_ref_t *ref, uint32_t *final_stamp)
+static lockfree_qnode_t *lockfree_queue_get_and_cover(lockfree_queue_t *q,
+        volatile stamped_ref_t *ref, uint32_t *final_stamp)
 {
     hazard_entry_t *entry = pthread_getspecific(hazard_ptr_entry_key);
     if (!entry) {
@@ -58,15 +74,12 @@ static lockfree_qnode_t *lockfree_queue_get_and_cover(lockfree_queue_t *q, stamp
     }
 }
 
-static void lockfree_queue_uncover(stamped_ref_t *ref)
+static void lockfree_queue_uncover(void *ptr)
 {
     hazard_entry_t *entry = pthread_getspecific(hazard_ptr_entry_key);
     /* TODO: Assert that entry != NULL */
 
-    /* Jankiest cast evarrrrrr */
-    lockfree_qnode_t *node = (lockfree_qnode_t *) ref;
-
-    hazard_ptr_remove(entry, node);
+    hazard_ptr_remove(entry, ptr);
 }
 
 void lockfree_queue_enqueue(lockfree_queue_t *q, void *v)
@@ -78,8 +91,8 @@ void lockfree_queue_enqueue(lockfree_queue_t *q, void *v)
     /* Keep attempting to enqueue. */
     while (1) {
         uint32_t last_stamp, next_stamp;
-        lockfree_qnode_t *last = (lockfree_qnode_t *) stamped_ref_get(&q->q_tail, &last_stamp);
-        lockfree_qnode_t *next = (lockfree_qnode_t *) stamped_ref_get(&last->n_next, &next_stamp);
+        lockfree_qnode_t *last = lockfree_queue_get_and_cover(q, &q->q_tail, &last_stamp);
+        lockfree_qnode_t *next = lockfree_queue_get_and_cover(q, &last->n_next, &next_stamp);
 
         uint32_t new_stamp;
         if (last == q->q_tail.ptr) {
@@ -91,6 +104,8 @@ void lockfree_queue_enqueue(lockfree_queue_t *q, void *v)
                     /* Yay, we successfully threaded ourselves onto the queue. Now,
                      * we must update the tail. */
                     stamped_ref_cas(&q->q_tail, last, last_stamp, new_node, new_stamp);
+                    lockfree_queue_uncover(last);
+                    lockfree_queue_uncover(next);
                     return;
                 }
             } else {
@@ -100,6 +115,8 @@ void lockfree_queue_enqueue(lockfree_queue_t *q, void *v)
                 stamped_ref_cas(&q->q_tail, last, last_stamp, next, new_stamp);
             }
         }
+        lockfree_queue_uncover(last);
+        lockfree_queue_uncover(next);
     }
 }
 
@@ -108,15 +125,18 @@ void *lockfree_queue_dequeue(lockfree_queue_t *q)
     /* Keep attempting to dequeue. */
     while (1) {
         uint32_t first_stamp, last_stamp, next_stamp;
-        lockfree_qnode_t *first = (lockfree_qnode_t *) stamped_ref_get(&q->q_head, &first_stamp);
-        lockfree_qnode_t *last = (lockfree_qnode_t *) stamped_ref_get(&q->q_tail, &last_stamp);
-        lockfree_qnode_t *next = (lockfree_qnode_t *) stamped_ref_get(&first->n_next, &next_stamp);
+        lockfree_qnode_t *first = lockfree_queue_get_and_cover(q, &q->q_head, &first_stamp);
+        lockfree_qnode_t *last = lockfree_queue_get_and_cover(q, &q->q_tail, &last_stamp);
+        lockfree_qnode_t *next = lockfree_queue_get_and_cover(q, &first->n_next, &next_stamp);
 
         uint32_t new_stamp;
         if (first == q->q_head.ptr) {
             if (first == last) {
                 if (next == 0) {
                     /* The queue is empty. Return 0. */
+                    lockfree_queue_uncover(first);
+                    lockfree_queue_uncover(last);
+                    lockfree_queue_uncover(next);
                     return 0;
                 }
                 else {
@@ -130,9 +150,34 @@ void *lockfree_queue_dequeue(lockfree_queue_t *q)
                 new_stamp = first_stamp + 1;
                 /* Try and remove it from the queue. */
                 if (stamped_ref_cas(&q->q_head, first, first_stamp, next, new_stamp)) {
+                    lockfree_queue_uncover(first);
+                    lockfree_queue_uncover(last);
+                    lockfree_queue_uncover(next);
+
+                    if (hazard_table_search(&q_hazard_chain, first)) {
+                        /* Some other thread still has a reference to this node. We should
+                         * put it on the free list so that the reaper will reap this dead
+                         * node. */
+                        lockfree_freenode_t *free_node;
+                        lockfree_freenode_t *next_node;
+                        do {
+                            free_node = (lockfree_freenode_t *) first;
+                            next_node = free_qnodes_head.lffn_next;
+                            free_node->lffn_next = next_node;
+                        } while (!compare_and_set(&free_qnodes_head.lffn_next, next_node, free_node));
+                    } else {
+                        /* No one else is looking at this node right now, so we can safely
+                         * free it ourselves. */
+                        qnode_deallocator(first);
+                    }
+
                     return value;
                 }
             }
         }
+
+        lockfree_queue_uncover(first);
+        lockfree_queue_uncover(last);
+        lockfree_queue_uncover(next);
     }
 }

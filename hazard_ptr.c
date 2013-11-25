@@ -41,10 +41,10 @@ void hazard_ptr_init(hazard_table_t *table)
 
 hazard_entry_t *hazard_ptr_getentry(hazard_table_t *table, uint32_t tid)
 {
-    hazard_table_t *hazard = table;
+    hazard_table_t *hazard;;
 
     uint32_t off = tid;
-    for (hazard = table; hazard != 0; hazard = hazard->ht_next_table) {
+    for (hazard = table; hazard->ht_next_table != 0; hazard = hazard->ht_next_table) {
         if (off < HAZARD_TABLE_SIZE) {
             return &hazard->ht_entries[off];
         }
