@@ -36,12 +36,12 @@ stamped_ref_cas:
   lock cmpxchg8b (%esi)
 
   # test ZF for whether we succeeded
-  jz cas_succeeded
+  jz 1f
   movl  $0x0, %eax
-  jmp cas_failed
-cas_succeeded:
+  jmp 2f
+1:
   movl  $0x1, %eax
-cas_failed:
+2:
   movl  0x4(%esp), %ebx
   movl  (%esp), %esi
   movl  %ebp, %esp

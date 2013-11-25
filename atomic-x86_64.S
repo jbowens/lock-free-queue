@@ -24,23 +24,21 @@ stamped_ref_cas:
 
   # load old ref/stamp into %rdx:%rax
   # (old stamp is already in %rdx)
-  shlq  $32, %rdx
   movq  %rsi, %rax
 
   # load new ref/stamp into %rcx:%rbx
   movq  %rcx, %rbx
   movq  %r8, %rcx
-  shlq  $32, %rcx
 
   lock cmpxchg16b (%rdi)
 
   # test ZF for whether we succeeded
-  jz cas_succeeded
+  jz 1f
   movq  $0x0, %rax
-  jmp cas_failed
-cas_succeeded:
+  jmp 2f
+1:
   movq  $0x1, %rax
-cas_failed:
+2:
   movq  (%rsp), %rsi
   movq  0x8(%rsp), %rbx
   addq  $0x10, %rsp
@@ -49,10 +47,13 @@ cas_failed:
 .size stamped_ref_cas, .-stamped_ref_cas
 
 stamped_ref_get:
+  subq    $0x8,   %rsp
   lddqu   (%rdi), %xmm0
+  movhps  %xmm0,  (%rsp)
+  movl    (%rsp), %eax
+  movl    %eax,   (%rsi)
   movq    %xmm0,  %rax
-  movhps  %xmm0,  (%rsi)
-  shrq    $32, (%rsi)
+  addq    $0x8,   %rsp
   ret
 
 .size stamped_ref_get, .-stamped_ref_get
