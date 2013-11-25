@@ -4,11 +4,11 @@ SRCS64 = atomic-x86_64.S
 
 all: queue-32
 
-queue-32:
-	gcc -std=c99 -g -m32 -lpthread $(SRCS) $(SRCS32) -o run_tests-32.out
+queue-32: $(SRCS) $(SRCS32)
+	gcc -std=c99 -g -m32 -lpthread $^ -o run_tests-32
 
-queue-64:
-	gcc -std=c99 -g -m64 -lpthread $(SRCS) $(SRCS64) -o run_tests-64.out
+queue-64: $(SRCS) $(SRCS64)
+	gcc -std=c99 -g -m64 -lpthread $^ -o run_tests-64
 
 clean:
-	rm run_tests*.out
+	rm run_tests*
