@@ -13,7 +13,7 @@
  * A memory location ready to be freed by the reaper.
  */
 typedef struct lockfree_freenode {
-    struct lockfree_freenode *lffn_next;
+    struct lockfree_freenode * volatile lffn_next;
 } lockfree_freenode_t;
 
 /**
@@ -26,7 +26,7 @@ typedef struct lockfree_reapd_attr {
     void (*lfra_free_func)(void *);
     /* A pointer to the sentinel head of the free list used
      * by the lock-free data structure. */
-    lockfree_freenode_t *lfra_free_list;
+    lockfree_freenode_t * volatile lfra_free_list;
 } lockfree_reapd_attr_t;
 
 /**
