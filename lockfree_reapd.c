@@ -13,11 +13,10 @@ lf_reaper_t *lockfree_reapd_spawn(lockfree_reapd_attr_t *attr)
 void *lockfree_reapd_main(void *arg)
 {
     lockfree_reapd_attr_t *attr = (lockfree_reapd_attr_t *) arg;
+    lockfree_freenode_t *sentinel_head = attr->lfra_free_list;
 
     for (;;)
     {
-
-        lockfree_freenode_t *sentinel_head = attr->lfra_free_list;
 
         while (sentinel_head->lffn_next == 0) {
             /* TODO: Add a sleep while the list is empty. */
@@ -36,6 +35,8 @@ void *lockfree_reapd_main(void *arg)
          */
         while (gobble_head != 0) {
             lockfree_freenode_t *prev = gobble_head;
+            /* Search for something in the list that's ready to be freed.
+             */
             for (lockfree_freenode_t *curr = gobble_head; curr != 0; curr = curr->lffn_next) {
                 if (!hazard_table_search(attr->lfra_hazard_table, curr)) {
                     /* This node is no longer in the hazard table and it's safe to free it. */
@@ -46,9 +47,11 @@ void *lockfree_reapd_main(void *arg)
                         /* This node is within the list. Unlink it. */
                         prev->lffn_next = curr->lffn_next;
                     }
+                    curr->lffn_next = 0;
                     attr->lfra_free_func(curr);
-                } else {
-                    prev = curr;
+                    /* Do NOT continue traversing because curr->lffn_next is now garbage. Restart
+                     * the traversal on the modified list. */
+                    break;
                 }
             }
         }

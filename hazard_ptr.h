@@ -2,6 +2,8 @@
 
 #include "atomic.h"
 
+#include <stdint.h>
+
 /**
  * A hazard pointer library for use in lock-free data structures.
  *
@@ -9,18 +11,18 @@
  */
 
 #define HAZARD_ENTRY_SIZE 4
-#define HAZARD_TABLE_SIZE 8
+#define HAZARD_TABLE_SIZE 800
 
 /*
  * Table of hazard pointers.
  */
 typedef struct hazard_entry {
-    void *he_ptrs[HAZARD_ENTRY_SIZE];
+    void * volatile he_ptrs[HAZARD_ENTRY_SIZE];
 } hazard_entry_t;
 
 typedef struct hazard_table {
     hazard_entry_t ht_entries[HAZARD_TABLE_SIZE];
-    struct hazard_table *ht_next_table;
+    struct hazard_table * volatile ht_next_table;
 } hazard_table_t;
 
 /**

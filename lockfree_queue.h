@@ -1,6 +1,7 @@
 #pragma once
 
 #include <pthread.h>
+#include <stdint.h>
 
 #include "atomic.h"
 #include "hazard_ptr.h"
@@ -27,8 +28,8 @@ lockfree_freenode_t free_qnodes_head;
  * A node in the queue.
  */
 typedef struct lockfree_qnode {
-    void *n_value;
-    volatile stamped_ref_t n_next;
+    void * volatile n_value;
+    struct lockfree_qnode * volatile n_next;
 } lockfree_qnode_t;
 
 /**
@@ -46,9 +47,9 @@ lockfree_reapd_attr_t qnode_reapd_attr;
  */
 typedef struct lockfree_queue {
     /* refs to lockfree qnodes */
-    stamped_ref_t q_head;
-    stamped_ref_t q_tail;
-    uint32_t q_next_tid;
+    lockfree_qnode_t * volatile q_head;
+    lockfree_qnode_t * volatile q_tail;
+    volatile uint32_t q_next_tid;
 } lockfree_queue_t;
 
 /**
