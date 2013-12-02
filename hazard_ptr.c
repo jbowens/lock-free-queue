@@ -22,6 +22,8 @@ int hazard_table_search(hazard_table_t *table, void *ptr)
 {
     hazard_table_t *hazard;
 
+    __sync_synchronize();
+
     int i, j;
     for (hazard = table; hazard != 0; hazard = hazard->ht_next_table) {
         for (i = 0; i < HAZARD_TABLE_SIZE; ++i) {

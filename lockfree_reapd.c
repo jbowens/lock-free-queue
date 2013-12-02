@@ -13,11 +13,10 @@ lf_reaper_t *lockfree_reapd_spawn(lockfree_reapd_attr_t *attr)
 void *lockfree_reapd_main(void *arg)
 {
     lockfree_reapd_attr_t *attr = (lockfree_reapd_attr_t *) arg;
+    lockfree_freenode_t *sentinel_head = attr->lfra_free_list;
 
     for (;;)
     {
-
-        lockfree_freenode_t *sentinel_head = attr->lfra_free_list;
 
         while (sentinel_head->lffn_next == 0) {
             /* TODO: Add a sleep while the list is empty. */
