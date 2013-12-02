@@ -52,8 +52,12 @@ static lockfree_qnode_t *lockfree_queue_get_and_cover(lockfree_queue_t *q,
 
     /* Keep trying until we're successful. */
     for (;;) {
-        /* Deference the stamped reference. */
         lockfree_qnode_t *node = *ref;
+
+        if (node == 0) {
+            return node;
+        }
+
         /* Cover the node in the hazard table. */
         hazard_ptr_add(entry, node);
 
