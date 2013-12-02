@@ -2,6 +2,8 @@
 
 #include "atomic.h"
 
+#include <stdint.h>
+
 /**
  * A hazard pointer library for use in lock-free data structures.
  *

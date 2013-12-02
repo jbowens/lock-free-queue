@@ -1,5 +1,6 @@
 #include "hazard_ptr.h"
 
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 
