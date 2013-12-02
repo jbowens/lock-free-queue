@@ -57,6 +57,8 @@ static lockfree_qnode_t *lockfree_queue_get_and_cover(lockfree_queue_t *q,
         /* Cover the node in the hazard table. */
         hazard_ptr_add(entry, node);
 
+        __sync_synchronize();
+
         /* Verify that the reference didn't change while we were covering it. */
         lockfree_qnode_t *verify_node = *ref;
         
