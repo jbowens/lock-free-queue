@@ -260,8 +260,8 @@ int main() {
      * A null-terminated list of tests to run.
      */
     queue_test_t *test_to_run[] = {
-//        &enqueue_crazy_10,
-//        &enqueue_crazy_100,
+        &enqueue_crazy_10,
+        &enqueue_crazy_100,
         &dequeue_crazy_10,
         &dequeue_crazy_100,
         &intermixed_test,
