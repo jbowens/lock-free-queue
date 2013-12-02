@@ -11,7 +11,7 @@
  */
 
 #define HAZARD_ENTRY_SIZE 4
-#define HAZARD_TABLE_SIZE 8
+#define HAZARD_TABLE_SIZE 800
 
 /*
  * Table of hazard pointers.

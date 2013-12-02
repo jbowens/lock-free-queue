@@ -28,7 +28,7 @@ lockfree_freenode_t free_qnodes_head;
  * A node in the queue.
  */
 typedef struct lockfree_qnode {
-    void *n_value;
+    void * volatile n_value;
     struct lockfree_qnode * volatile n_next;
 } lockfree_qnode_t;
 
