@@ -13,7 +13,7 @@ void lockfree_queues_initall()
     qnode_reapd_attr.lfra_hazard_table = &q_hazard_chain;
     qnode_reapd_attr.lfra_free_func = (void(*)(void *)) qnode_deallocator;
     qnode_reapd_attr.lfra_free_list = &free_qnodes_head;
-    lf_reaper_t *reaper = lockfree_reapd_spawn(&qnode_reapd_attr);
+    lockfree_reapd_spawn(&qnode_reapd_attr);
 }
 
 /**

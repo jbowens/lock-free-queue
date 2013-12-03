@@ -277,5 +277,7 @@ int main() {
         success = success && run_test(*test);
     }
 
+    lockfree_reapd_cleanup();
+
     return success ? 0 : 1;
 }

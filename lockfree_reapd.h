@@ -37,10 +37,10 @@ typedef pthread_t lf_reaper_t;
 /**
  * Spawns a new reaper.
  */
-lf_reaper_t *lockfree_reapd_spawn(lockfree_reapd_attr_t *attr);
+void lockfree_reapd_spawn(lockfree_reapd_attr_t *attr);
 
 /**
- * The body of the reaper.
+ * Cleans up at the end.
  */
-void *lockfree_reapd_main(void *arg);
+void lockfree_reapd_cleanup();
 

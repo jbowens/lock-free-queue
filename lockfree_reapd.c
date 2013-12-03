@@ -3,22 +3,18 @@
 #include "atomic.h"
 #include "lockfree_reapd.h"
 
-lf_reaper_t *lockfree_reapd_spawn(lockfree_reapd_attr_t *attr)
-{
-    pthread_t *thread = malloc(sizeof(pthread_t));
-    pthread_create(thread, 0, &lockfree_reapd_main, attr);
-    return thread;
-}
+static pthread_t reapd;
+static int reap = 1;
 
-void *lockfree_reapd_main(void *arg)
+static void *lockfree_reapd_main(void *arg)
 {
     lockfree_reapd_attr_t *attr = (lockfree_reapd_attr_t *) arg;
     lockfree_freenode_t *sentinel_head = attr->lfra_free_list;
 
-    for (;;)
+    while (reap)
     {
 
-        while (sentinel_head->lffn_next == 0) {
+        while (sentinel_head->lffn_next == 0 && reap) {
             /* TODO: Add a sleep while the list is empty. */
             sched_yield();
         }
@@ -62,4 +58,15 @@ void *lockfree_reapd_main(void *arg)
     }
 
     return 0;
+}
+
+void lockfree_reapd_spawn(lockfree_reapd_attr_t *attr)
+{
+    pthread_create(&reapd, 0, &lockfree_reapd_main, attr);
+}
+
+void lockfree_reapd_cleanup()
+{
+    reap = 0;
+    pthread_join(reapd, 0);
 }
