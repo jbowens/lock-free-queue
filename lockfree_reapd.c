@@ -11,7 +11,7 @@ static void *lockfree_reapd_main(void *arg)
     lockfree_reapd_attr_t *attr = (lockfree_reapd_attr_t *) arg;
     lockfree_freenode_t *sentinel_head = attr->lfra_free_list;
 
-    while (reap)
+    while (sentinel_head->lffn_next != 0 && reap)
     {
 
         while (sentinel_head->lffn_next == 0 && reap) {
