@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <stdio.h>
 #include <sched.h>
 #include "atomic.h"
 #include "lockfree_reapd.h"
@@ -11,11 +12,10 @@ static void *lockfree_reapd_main(void *arg)
     lockfree_reapd_attr_t *attr = (lockfree_reapd_attr_t *) arg;
     lockfree_freenode_t *sentinel_head = attr->lfra_free_list;
 
-    while (sentinel_head->lffn_next != 0 && reap)
+    while (reap || sentinel_head->lffn_next != 0)
     {
 
-        while (sentinel_head->lffn_next == 0 && reap) {
-            /* TODO: Add a sleep while the list is empty. */
+        while (reap && sentinel_head->lffn_next == 0) {
             sched_yield();
         }
 
@@ -52,10 +52,12 @@ static void *lockfree_reapd_main(void *arg)
             }
         }
 
-        /* TODO: Update this to actually go to sleep. */
         sched_yield();
 
     }
+
+    fprintf(stderr, "reapd quitting\n");
+    fprintf(stderr, "reap: %d, free list head: %p\n", reap, sentinel_head->lffn_next);
 
     return 0;
 }
